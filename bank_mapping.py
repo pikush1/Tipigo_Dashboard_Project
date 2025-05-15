@@ -15,7 +15,7 @@ class BankAMapping(MappingStrategy):
             9: "Date",       
             11: "Quantity",
             12: "Transaction_rate",
-            13: "Gross_transaction_rate",
+            13: "Gross_transaction_amount",
             16: "Net_transaction_amount",
             18: "Nominal_profit_ILS",
             25: "Real_profit_ILS",
@@ -37,7 +37,7 @@ class BankAMapping(MappingStrategy):
             "מכירה": "Sell",
             "העברה לזכות הפקדון": "Transfer to deposit",
             "הטבה חלוקת מניות": "Stock distribution benefit",
-            "דיבידנד בתשלום": "Dividend"
+            "דבידנד תשלום": "Dividend"
         }
         mapped_data["Action"] = mapped_data["Action"].map(action_mapping)
         return mapped_data
