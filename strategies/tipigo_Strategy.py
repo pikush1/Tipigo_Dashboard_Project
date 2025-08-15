@@ -4,7 +4,7 @@ from strategies.base import MappingStrategy
 
 # Tipigo mapping
 class BankBStrategy(MappingStrategy):
-    def run(self, file_path: str) -> pd.DataFrame:
+    def run_tipigo(self, file_path: str) -> pd.DataFrame:
         raw = self.load(file_path)
         return self.pipeline(raw)
     

@@ -15,8 +15,3 @@ class MappingStrategy(ABC):
     def map_to_uniform(self, raw_data: pd.DataFrame) -> pd.DataFrame:
         """Optional: only used by strategies that require mapping."""
         return raw_data
-
-    @abstractmethod
-    def pipeline(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Final transformation step applied to mapped or raw data."""
-        pass
