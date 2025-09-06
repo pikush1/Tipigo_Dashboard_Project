@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats.mstats import gmean
 
-def create_csv(merged_data, total_assets, total_monthly, input_benchmarks, file_path="results/report.xlsx"):
+def create_csv_hapoalim(merged_data, total_assets, total_monthly, input_benchmarks, file_path="results/hapoalim_report.xlsx"):
     TRADING_DAYS = 252
 
     # --- Portfolio metrics ---
@@ -38,21 +38,21 @@ def create_csv(merged_data, total_assets, total_monthly, input_benchmarks, file_
         cumret_col = f'Cumulative_return_{bm}'
         dailyret_col = f'Daily_return_{bm}'
         excess_ret_col = f'Excess_daily_return_{bm}'  # Assuming this column exists for benchmarks
-        
+
         # Default values
         bm_metrics = [np.nan, np.nan, '', np.nan, np.nan]
-        
+
         if cumret_col in merged_data.columns and dailyret_col in merged_data.columns:
             std_bm = merged_data[dailyret_col].std(ddof=0) * np.sqrt(TRADING_DAYS)
             bm_cumret = merged_data[cumret_col].iloc[-1]
-            
+
             # For max drawdown, calculate for benchmark as well
             bm_series = merged_data[cumret_col].fillna(method="ffill")
             bm_running_max = bm_series.expanding().max()
             bm_drawdown = bm_series - bm_running_max
             bm_max_drawdown = bm_drawdown.min()
             bm_max_dd_date = merged_data.loc[bm_drawdown.idxmin(), 'Date']
-            
+
             # Calculate Sharpe ratio for benchmark
             sharpe_ratio_bm = np.nan
             if excess_ret_col in merged_data.columns:
@@ -60,7 +60,7 @@ def create_csv(merged_data, total_assets, total_monthly, input_benchmarks, file_
                 if std_excess_bm != 0:
                     geomean_excess_bm = gmean(1 + merged_data[excess_ret_col]) - 1
                     sharpe_ratio_bm = geomean_excess_bm / std_excess_bm * np.sqrt(TRADING_DAYS)
-            
+
             bm_metrics = [
                 round(std_bm, 4),
                 round(bm_max_drawdown, 4),
@@ -68,7 +68,7 @@ def create_csv(merged_data, total_assets, total_monthly, input_benchmarks, file_
                 round(bm_cumret, 4),
                 round(sharpe_ratio_bm, 4) if not np.isnan(sharpe_ratio_bm) else np.nan
             ]
-        
+
         metrics_dict[bm] = bm_metrics
 
     metrics_summary = pd.DataFrame(metrics_dict)
@@ -97,6 +97,108 @@ def create_csv(merged_data, total_assets, total_monthly, input_benchmarks, file_
                 'name':       ['Performance Chart', 1, i],
                 'categories': ['Performance Chart', 2, 0, len(chart_data)+1, 0],
                 'values':     ['Performance Chart', 2, i, len(chart_data)+1, i],
+            })
+        chart.set_title({'name': 'Cumulative Returns Comparison'})
+        chart.set_x_axis({'name': 'Date'})
+        chart.set_y_axis({'name': 'Cumulative Return'})
+        chart.set_legend({'position': 'bottom'})
+        worksheet.insert_chart('F2', chart)
+
+def create_csv_interactive(result_df, input_benchmarks, file_path="results/interactive_report.xlsx"):
+    MONTHS_PER_YEAR = 12
+
+    # --- Portfolio metrics ---
+    # Use Portfolio_Monthly_Yield for standard deviation calculation
+    std_portfolio = result_df['Portfolio_Monthly_Yield'].std(ddof=0) * np.sqrt(MONTHS_PER_YEAR)
+    portfolio_cumulative = result_df['Total_Cumulative_Return']
+
+    # Calculate Max Drawdown
+    running_max = portfolio_cumulative.expanding().max()
+    drawdown = portfolio_cumulative - running_max
+    max_drawdown = drawdown.min()
+    max_dd_date = result_df.loc[drawdown.idxmin(), 'Date']
+    final_portfolio_return = portfolio_cumulative.iloc[-1]
+
+    # Portfolio Sharpe Ratio calculation
+    mean_excess_return = result_df["Excess_Return"].mean()
+    std_excess_return = result_df["Excess_Return"].std(ddof=0)
+
+    if std_excess_return != 0:
+        sharpe_ratio_portfolio = mean_excess_return / std_excess_return * np.sqrt(MONTHS_PER_YEAR)
+    else:
+        sharpe_ratio_portfolio = np.nan
+
+    # --- Build metrics summary table ---
+    metrics_rows = [
+        ("Portfolio Std Dev (Annualized)", round(std_portfolio, 4)),
+        ("Max Drawdown", round(max_drawdown, 4)),
+        ("Max Drawdown Date", str(max_dd_date)),
+        ("Final Cumulative Return", round(final_portfolio_return, 4)),
+        ("Sharpe Ratio", round(sharpe_ratio_portfolio, 4) if not np.isnan(sharpe_ratio_portfolio) else np.nan)
+    ]
+    metrics_dict = {"Metric": [r[0] for r in metrics_rows], "Portfolio": [r[1] for r in metrics_rows]}
+
+    # For the single benchmark, add dynamic columns
+    monthly_ret_col = f"{input_benchmarks}_Monthly_Return"
+    cum_ret_col = f"{input_benchmarks}_Cumulative_Return"
+
+    bm_metrics = [np.nan, np.nan, '', np.nan, np.nan]
+
+    if monthly_ret_col in result_df.columns and cum_ret_col in result_df.columns:
+        # Std Dev for benchmark
+        std_bm = result_df[monthly_ret_col].std(ddof=0) * np.sqrt(MONTHS_PER_YEAR)
+
+        # Max Drawdown for benchmark
+        bm_series = result_df[cum_ret_col]
+        bm_running_max = bm_series.expanding().max()
+        bm_drawdown = bm_series - bm_running_max
+        bm_max_drawdown = bm_drawdown.min()
+        bm_max_dd_date = result_df.loc[bm_drawdown.idxmin(), 'Date']
+
+        # Final cumulative return for benchmark
+        bm_cum_ret = result_df[cum_ret_col].iloc[-1]
+
+        # Sharpe ratio for benchmark
+        benchmark_excess_return = result_df[monthly_ret_col] - (
+                    result_df['Portfolio_Monthly_Yield'] - result_df['Excess_Return'])
+        std_bm_excess_return = benchmark_excess_return.std(ddof=0)
+
+        sharpe_ratio_bm = np.nan
+        if std_bm_excess_return != 0:
+            sharpe_ratio_bm = benchmark_excess_return.mean() / std_bm_excess_return * np.sqrt(MONTHS_PER_YEAR)
+
+        bm_metrics = [
+            round(std_bm, 4),
+            round(bm_max_drawdown, 4),
+            str(bm_max_dd_date),
+            round(bm_cum_ret, 4),
+            round(sharpe_ratio_bm, 4) if not np.isnan(sharpe_ratio_bm) else np.nan
+        ]
+
+    metrics_dict[input_benchmarks] = bm_metrics
+
+    metrics_summary = pd.DataFrame(metrics_dict)
+
+    # --- Performance Chart Data ---
+    chart_cols = ['Date', 'Total_Cumulative_Return', f'{input_benchmarks}_Cumulative_Return']
+    chart_data = result_df[chart_cols].copy()
+
+    # --- Write to Excel ---
+    with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+        # Data sheets
+        result_df.to_excel(writer, sheet_name='Monthly Summary', index=False)
+        metrics_summary.to_excel(writer, sheet_name='Metrics Summary', index=False)
+        chart_data.to_excel(writer, sheet_name='Performance Chart', startrow=1, index=False)
+
+        # Chart
+        workbook = writer.book
+        worksheet = writer.sheets['Performance Chart']
+        chart = workbook.add_chart({'type': 'line'})
+        for i, col in enumerate(chart_data.columns[1:], start=1):  # skip Date
+            chart.add_series({
+                'name': ['Performance Chart', 1, i],
+                'categories': ['Performance Chart', 2, 0, len(chart_data) + 1, 0],
+                'values': ['Performance Chart', 2, i, len(chart_data) + 1, i],
             })
         chart.set_title({'name': 'Cumulative Returns Comparison'})
         chart.set_x_axis({'name': 'Date'})
