@@ -1,15 +1,37 @@
 # Tipigo_Dashboard_Project
 
-The main function gets raw_data and finds the strategy that's right due to the file's name
-mapped data returns the raw_data after mapping, each raw_data has a different strategy for mapping
+The main function gets **raw_data** and finds the strategy with the **StrategySelector**, that's right due to the file's name
+Each platform has its own strategy, and its own run method
+All of the strategies have to implement a run method as they inherit from an ABC class.
 
-Then, we take the stock prices from the Tipigo's system file
-and the risk free rate from FRED
+For each platform, **strategy.run** method is implemented differently, according to the raw data of the platform
+each strategy deals with all of the stages that need to be performed in order to get a csv & pdf which will be saved in
+the results folder.
+The method will return the processed data and will generate the necessary reports.
 
-In the pipeline function we get mapped_data, stock_prices, initial_cash, risk_free
-we create total_assets (unrealized is calculated there)
-and final data which leaves us with - Date  Daily_yield  Cumulative_yield  daily_risk_free_rate_per_month  Excess_daily_yield
+Notice that the risk free rate file is permanent for all platforms
 
-Then we take the benchmark data, and merge it with the final data to get the merged data
+To run **Hapoalim** -
+Provide a dictionary like so :
 
-We use merged_data to create total_monthly, PDF, CSV
+    hapoalim_args = {
+    "raw_data": "/Users/ofri.bracha/Desktop/tipigo_project/Tipigo_Dashboard_Project/data/raw_data/output_444558_hapoalim.xlsx",
+    "system_file": "/Users/ofri.bracha/Desktop/tipigo_project/Tipigo_Dashboard_Project/data/system_files/444558.xlsx",
+    "input_benchmarks": ['SPY'],
+    "initial_cash": 500000,
+    "risk_free_rate_file": risk_free_rate_file
+    }
+notes: benchmarks have to be in a list, can provide 2 benchmarks as well inside a list
+
+To run **Interactive** -
+Provide a dictionary like so :
+
+     interactive_args = {
+     "raw_data": "/Users/ofri.bracha/Desktop/tipigo_project/Tipigo_Dashboard_Project/data/raw_data/S&P500 SPY Hedged Interactive Brokers (2024) students.xlsx",
+     "input_benchmarks": 'SPY',
+     "initial_cash": 250000,
+     "risk_free_rate_file": risk_free_rate_file
+     }
+notes: can handle only one benchmark, not inside a list
+
+The main function can handle the fact that the input is different for every platform due to **kwargs.
