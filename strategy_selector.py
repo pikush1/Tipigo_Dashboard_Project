@@ -1,11 +1,13 @@
-from strategies.hapoalim_Strategy import BankAStrategy
-from strategies.tipigo_Strategy import BankBStrategy
+from strategies import HapoalimStrategy, InteractiveStrategy, TipigoStrategy
 
-def MappingStrategy(file_path):
+
+def StrategySelector(file_path):
     filename = file_path.lower()
     if "hapoalim" in filename:
-        return BankAStrategy()
+        return HapoalimStrategy()
     elif "interactive" in filename:
-        return "interactive"
+        return InteractiveStrategy()
+    elif "tipigo" in filename:
+        return TipigoStrategy()
     else:
         return None

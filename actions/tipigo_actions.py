@@ -1,12 +1,7 @@
 import pandas as pd
-from strategies.base import MappingStrategy
 
 
-# Tipigo mapping
-class BankBStrategy(MappingStrategy):
-    def run_tipigo(self, file_path: str) -> pd.DataFrame:
-        raw = self.load(file_path)
-        return self.pipeline(raw)
+class TipigoActions:
     
     def load(self, file_path: str) -> pd.DataFrame:
         return pd.read_excel(file_path, sheet_name="Insert Daily Performance")

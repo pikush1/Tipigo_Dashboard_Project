@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 from fpdf import FPDF
 import numpy as np
-from scipy.stats import gmean
+
 
 def create_pdf_hapoalim(df, benchmarks, file_path="results/hapoalim_pdf_report.pdf"):
     TRADING_DAYS = 252
@@ -195,6 +195,8 @@ def create_pdf_hapoalim(df, benchmarks, file_path="results/hapoalim_pdf_report.p
 
     pdf.output(file_path)
 
+    print(f"PDF report generated at {file_path}")
+
 
 
 def create_pdf_interactive(result_df, input_benchmarks, file_path="results/interactive_pdf_report.pdf"):
@@ -316,7 +318,6 @@ def create_pdf_interactive(result_df, input_benchmarks, file_path="results/inter
     std_excess_return = result_df["Risk_Free_Excess_Return"].std(ddof=0)
     sharpe_ratio_portfolio = (mean_excess_return / std_excess_return) * np.sqrt(
         MONTHS_PER_YEAR) if std_excess_return != 0 else np.nan
-    print(mean_excess_return, std_excess_return, sharpe_ratio_portfolio)
 
     pdf.ln(5)
     pdf.set_font("helvetica", 'B', size=12)
